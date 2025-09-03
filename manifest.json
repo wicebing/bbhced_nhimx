@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "NHI Medication Organizer",
+  "description": "整理病人6個月內的所有用藥，分類並標示目前正在使用及重要手術前注意藥物",
+  "version": "0.1.0",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://medcloud2.nhi.gov.tw/imu/*",
+    "https://medcloud2.nhi.gov.tw/*"
+  ],
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_title": "整理用藥"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://medcloud2.nhi.gov.tw/imu/*", "https://medcloud2.nhi.gov.tw/*"],
+      "js": ["src/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
