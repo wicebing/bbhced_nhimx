@@ -81,9 +81,11 @@ function inlineScraperCode() {
   return (() => {
     function norm(s){ return (s||'').replace(/\s+/g,' ').trim(); }
     function parseDate(s){ if(!s) return null; const m = (s||'').trim().match(/^(\d{2,4})[\/\-](\d{1,2})[\/\-](\d{1,2})/); if(m){ let y=Number(m[1]); if(y<1900) y=y+1911; return new Date(y,Number(m[2])-1,Number(m[3])); } const d=new Date(s); return isNaN(d)?null:d; }
-    const SGLT2 = ['canagliflozin','dapagliflozin','empagliflozin','ertugliflozin','卡納格列汀','達格列淨','恩格列淨'];
+  // include substring "flozin" to catch variants/brands (e.g. -flozin suffix)
+    const SGLT2 = ['flozin','canagliflozin','dapagliflozin','empagliflozin','ertugliflozin','卡納格列汀','達格列淨','恩格列淨'];
     const ANTI = ['aspirin','clopidogrel','prasugrel','ticagrelor','plavix','阿司匹林','氯吡格雷'];
-    const NOAC = ['dabigatran','rivaroxaban','apixaban','edoxaban','達比加群','利伐沙班','阿哌沙班'];
+  // include substring "xaban" to catch factor Xa inhibitors with -xaban suffix
+    const NOAC = ['xaban','dabigatran','rivaroxaban','apixaban','edoxaban','達比加群','利伐沙班','阿哌沙班'];
     const WARF = ['warfarin','coumadin','華法林'];
     const HEP = ['clexane','enoxaparin','heparin','依諾肝素'];
 
