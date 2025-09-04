@@ -38,20 +38,42 @@ function render() {
       const list = grouped[cat] || [];
       const box = el('div','category');
       box.appendChild(el('h3', null, cat + ' (' + list.length + ')' + (list.length ? '' : '（重點）')));
+
       if (list.length === 0) {
         box.appendChild(el('div','none','無使用'));
-      } else {
-        const ul = el('ul','meds');
-        list.forEach(m => {
-          const li = el('li','med');
-          if (m.active) li.classList.add('active');
-          if (priority.includes(m.category)) li.classList.add('important');
-          li.appendChild(el('div','name', m.name || m.drugName || m.raw));
-          li.appendChild(el('div','meta', (m.dose || '') + ' ' + (m.start||'') + (m.end?(' - '+m.end):'')));
-          ul.appendChild(li);
-        });
-        box.appendChild(ul);
+        reportList.appendChild(box);
+        return;
       }
+
+      // group duplicates within priority categories as well
+      const groups = {};
+      list.forEach(m => {
+        const key = ((m.drugName || m.name || m.components || m.raw) + '').toLowerCase().trim();
+        (groups[key] = groups[key] || []).push(m);
+      });
+
+      function fmtDate(iso) { try { return iso ? new Date(iso).toLocaleDateString() : ''; } catch (e) { return iso || ''; } }
+      const ul = el('ul','meds');
+
+      Object.keys(groups).forEach(k => {
+        const items = groups[k];
+        const sample = items[0];
+        const li = el('li','med');
+        if (items.some(x=>x.active)) li.classList.add('active');
+        li.classList.add('important');
+        li.appendChild(el('div','name', sample.name || sample.drugName || sample.raw || k));
+
+        const dates = items.map(x => x.visitDate).filter(Boolean).map(d => ({ raw:d, t: new Date(d).getTime() })).sort((a,b)=>a.t-b.t).map(x=>fmtDate(x.raw));
+        const metaParts = [];
+        if (sample.dose) metaParts.push(sample.dose);
+        if (dates.length) metaParts.push('日期: ' + dates.join('、'));
+        else metaParts.push(sample.raw ? sample.raw.split('\n')[0] : '');
+        if (sample.days) metaParts.push('/ ' + sample.days);
+        li.appendChild(el('div','meta', metaParts.join(' ')));
+        ul.appendChild(li);
+      });
+
+      box.appendChild(ul);
       reportList.appendChild(box);
     });
 
@@ -62,13 +84,36 @@ function render() {
       const box = el('div','category');
       box.appendChild(el('h3', null, cat + ' (' + list.length + ')'));
       const ul = el('ul','meds');
+
+      // Collapse duplicate drugs for 'Other' (or any non-priority): group by normalized drug name
+      const groups = {};
       list.forEach(m => {
+        const key = ((m.drugName || m.name || m.components || m.raw) + '').toLowerCase().trim();
+        (groups[key] = groups[key] || []).push(m);
+      });
+
+      function fmtDate(iso) {
+        try { return iso ? new Date(iso).toLocaleDateString() : ''; } catch (e) { return iso || ''; }
+      }
+
+      Object.keys(groups).forEach(k => {
+        const items = groups[k];
+        // combine into a single list item
+        const sample = items[0];
         const li = el('li','med');
-        if (m.active) li.classList.add('active');
-        li.appendChild(el('div','name', m.name || m.drugName || m.raw));
-        li.appendChild(el('div','meta', (m.dose || '') + ' ' + (m.start||'') + (m.end?(' - '+m.end):'')));
+        if (items.some(x=>x.active)) li.classList.add('active');
+        li.appendChild(el('div','name', sample.name || sample.drugName || sample.raw || k));
+
+        // collect and sort dates (ascending)
+        const dates = items.map(x => x.visitDate).filter(Boolean).map(d => ({ raw:d, t: new Date(d).getTime() })).sort((a,b)=>a.t-b.t).map(x=>fmtDate(x.raw));
+        const metaParts = [];
+        if (sample.dose) metaParts.push(sample.dose);
+        if (dates.length) metaParts.push('日期: ' + dates.join('、'));
+        else metaParts.push(sample.raw ? sample.raw.split('\n')[0] : '');
+        li.appendChild(el('div','meta', metaParts.join(' ')));
         ul.appendChild(li);
       });
+
       box.appendChild(ul);
       reportList.appendChild(box);
     });

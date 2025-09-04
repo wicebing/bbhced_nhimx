@@ -36,22 +36,87 @@ function renderReport() {
     // render priority categories first (always show these; display "無使用" when empty)
     priority.forEach(cat => {
       const list = byCategory[cat] || [];
-      if (list.length) {
-        report.appendChild(makeSection(cat + '（重點）', list));
-      } else {
+      if (!list.length) {
         // empty section with explicit "無使用"
         const box = el('div', 'category');
         box.appendChild(el('h2', null, cat + ' (0)（重點）'));
         const none = el('div', 'none', '無使用');
         box.appendChild(none);
         report.appendChild(box);
+        return;
       }
+
+      // For priority categories, collapse duplicate drugs and show ordered dates
+      const box = el('div','category');
+      box.appendChild(el('h2', null, cat + '（重點） (' + list.length + ')'));
+
+      // group by normalized drug name
+      const groups = {};
+      list.forEach(m => {
+        const key = ((m.drugName || m.components || m.name || m.raw) + '').toLowerCase().trim();
+        (groups[key] = groups[key] || []).push(m);
+      });
+
+      const ul = el('ul','meds');
+      function fmtDate(iso) { try { return iso ? new Date(iso).toLocaleDateString() : ''; } catch (e) { return iso || ''; } }
+
+      Object.keys(groups).forEach(k => {
+        const items = groups[k];
+        const sample = items[0];
+        const li = el('li','med');
+        if (items.some(x=>x.active)) li.classList.add('active');
+        if (priority.includes(cat)) li.classList.add('important');
+        li.appendChild(el('div','name', sample.drugName || sample.components || sample.name || sample.raw || k));
+
+        const dates = items.map(x => x.visitDate).filter(Boolean).map(d => ({ raw:d, t: new Date(d).getTime() })).sort((a,b)=>a.t-b.t).map(x=>fmtDate(x.raw));
+        const metaParts = [];
+        if (sample.dose) metaParts.push(sample.dose);
+        if (dates.length) metaParts.push('日期: ' + dates.join('、'));
+        else metaParts.push(sample.visitDate ? fmtDate(sample.visitDate) : (sample.raw ? sample.raw.split('\n')[0] : ''));
+        if (sample.days) metaParts.push('/ ' + sample.days);
+        li.appendChild(el('div','meta', metaParts.join(' ')));
+        ul.appendChild(li);
+      });
+
+      box.appendChild(ul);
+      report.appendChild(box);
     });
 
-    // then render any other categories
+    // then render any other categories: collapse duplicate drugs and list their visit dates
     const others = Object.keys(byCategory).filter(c=>!priority.includes(c)).sort();
     others.forEach(cat=>{
-      report.appendChild(makeSection(cat, byCategory[cat]));
+      const list = byCategory[cat] || [];
+      const box = el('div','category');
+      box.appendChild(el('h2',null, cat + ' (' + list.length + ')'));
+
+      // group by normalized drug name
+      const groups = {};
+      list.forEach(m => {
+        const key = ((m.drugName || m.components || m.name || m.raw) + '').toLowerCase().trim();
+        (groups[key] = groups[key] || []).push(m);
+      });
+
+      const ul = el('ul','meds');
+      function fmtDate(iso) { try { return iso ? new Date(iso).toLocaleDateString() : ''; } catch (e) { return iso || ''; } }
+
+      Object.keys(groups).forEach(k => {
+        const items = groups[k];
+        const sample = items[0];
+        const li = el('li','med');
+        if (items.some(x=>x.active)) li.classList.add('active');
+        li.appendChild(el('div','name', sample.drugName || sample.components || sample.name || sample.raw || k));
+
+        const dates = items.map(x => x.visitDate).filter(Boolean).map(d => ({ raw:d, t: new Date(d).getTime() })).sort((a,b)=>a.t-b.t).map(x=>fmtDate(x.raw));
+        const metaParts = [];
+        if (sample.dose) metaParts.push(sample.dose);
+        if (dates.length) metaParts.push('日期: ' + dates.join('、'));
+        else metaParts.push(sample.raw ? sample.raw.split('\n')[0] : '');
+        li.appendChild(el('div','meta', metaParts.join(' ')));
+        ul.appendChild(li);
+      });
+
+      box.appendChild(ul);
+      report.appendChild(box);
     });
   });
 }
