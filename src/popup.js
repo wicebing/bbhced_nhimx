@@ -61,7 +61,22 @@ function render() {
         const li = el('li','med');
         if (items.some(x=>x.active)) li.classList.add('active');
         li.classList.add('important');
-        li.appendChild(el('div','name', sample.name || sample.drugName || sample.raw || k));
+
+        // name + generic (學名)
+        const nameText = sample.name || sample.drugName || sample.raw || k;
+        const nameDiv = el('div','name', nameText);
+        // prefer components as學名, fallback to first raw line
+        const genericText = (sample.components || (sample.raw ? sample.raw.split('\n')[0] : '') ).trim();
+        const nameKey = (nameText + '').toLowerCase().trim();
+        const genericKey = (genericText + '').toLowerCase().trim();
+        if (genericKey && genericKey !== nameKey) {
+          const gEl = el('div','generic', genericText);
+          gEl.style.fontSize = '0.85em';
+          gEl.style.fontStyle = 'italic';
+          gEl.style.color = '#444';
+          nameDiv.appendChild(gEl);
+        }
+        li.appendChild(nameDiv);
 
         const dates = items.map(x => x.visitDate).filter(Boolean).map(d => ({ raw:d, t: new Date(d).getTime() })).sort((a,b)=>a.t-b.t).map(x=>fmtDate(x.raw));
         const metaParts = [];
@@ -102,7 +117,21 @@ function render() {
         const sample = items[0];
         const li = el('li','med');
         if (items.some(x=>x.active)) li.classList.add('active');
-        li.appendChild(el('div','name', sample.name || sample.drugName || sample.raw || k));
+
+        // name + generic (學名)
+        const nameText = sample.name || sample.drugName || sample.raw || k;
+        const nameDiv = el('div','name', nameText);
+        const genericText = (sample.components || (sample.raw ? sample.raw.split('\n')[0] : '') ).trim();
+        const nameKey = (nameText + '').toLowerCase().trim();
+        const genericKey = (genericText + '').toLowerCase().trim();
+        if (genericKey && genericKey !== nameKey) {
+          const gEl = el('div','generic', genericText);
+          gEl.style.fontSize = '0.85em';
+          gEl.style.fontStyle = 'italic';
+          gEl.style.color = '#444';
+          nameDiv.appendChild(gEl);
+        }
+        li.appendChild(nameDiv);
 
         // collect and sort dates (ascending)
         const dates = items.map(x => x.visitDate).filter(Boolean).map(d => ({ raw:d, t: new Date(d).getTime() })).sort((a,b)=>a.t-b.t).map(x=>fmtDate(x.raw));
