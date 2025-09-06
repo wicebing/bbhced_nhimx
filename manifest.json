@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "NHI Medication Organizer",
-  "description": "整理病人6個月內的所有用藥，分類並標示目前正在使用及重要手術前注意藥物",
-  "version": "0.1.0",
+  "description": "整理病人近期的所有用藥，分類並標示目前正在使用及重要手術前注意藥物",
+  "version": "0.1.1",
   "permissions": [
     "storage",
     "activeTab",
